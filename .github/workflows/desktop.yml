@@ -20,8 +20,38 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: |
           if [ ! -f package.json ] && [ -f vntrader-app/package.json ]; then cd vntrader-app; fi
+          echo "== File đang có =="; ls -la
+          if [ ! -f www/index.html ]; then
+            echo "::error::THIẾU thư mục www (hoặc file www/index.html). Hãy tải thư mục www lên GitHub."
+            exit 1
+          fi
           npm install
-          npm run dist:win
+          mkdir -p www/vendor
+          cp node_modules/lightweight-charts/dist/lightweight-charts.standalone.production.js www/vendor/
+          cp node_modules/mqtt/dist/mqtt.min.js www/vendor/ || echo "Không có mqtt.min.js - app sẽ tải khi cần"
+          if [ ! -f electron/main.cjs ]; then
+            mkdir -p electron
+            cat > electron/main.cjs <<'EOF'
+          const { app, BrowserWindow, shell } = require('electron');
+          const path = require('path');
+          function createWindow() {
+            const win = new BrowserWindow({
+              width: 1440, height: 900, minWidth: 900, minHeight: 600,
+              backgroundColor: '#0f1a2b', title: 'VNTrader',
+              webPreferences: { contextIsolation: true, nodeIntegration: false, webSecurity: false },
+            });
+            win.setMenuBarVisibility(false);
+            win.loadFile(path.join(__dirname, '..', 'www', 'index.html'));
+            win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
+            win.webContents.on('will-navigate', (e, url) => { if (!url.startsWith('file:')) { e.preventDefault(); shell.openExternal(url); } });
+          }
+          app.whenReady().then(createWindow);
+          app.on('window-all-closed', () => app.quit());
+          EOF
+          fi
+          ICON=""
+          if [ -f www/icons/icon-512.png ]; then ICON="-c.win.icon=www/icons/icon-512.png"; fi
+          npx electron-builder --win nsis portable --publish never $ICON
       - uses: actions/upload-artifact@v4
         with:
           name: VNTrader-Windows
