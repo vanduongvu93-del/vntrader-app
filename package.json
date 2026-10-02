@@ -1,0 +1,60 @@
+{
+  "name": "vntrader-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "VNTrader – app giao dịch chứng khoán Việt Nam (Android APK + PWA)",
+  "scripts": {
+    "build": "node scripts/copy-vendor.mjs",
+    "android": "npm run build && npx cap sync android && npx cap open android",
+    "desktop": "npm run build && electron .",
+    "dist:win": "npm run build && electron-builder --win nsis portable --publish never"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/core": "^6.2.0",
+    "lightweight-charts": "4.1.3",
+    "mqtt": "5.10.1"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^6.2.0",
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  },
+  "main": "electron/main.cjs",
+  "author": "VNTrader",
+  "build": {
+    "appId": "vn.vntrader.desktop",
+    "productName": "VNTrader",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**",
+      "www/**",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "assets/icon-only.png",
+      "artifactName": "VNTrader-${version}-${arch}-${target}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "VNTrader"
+    },
+    "portable": {
+      "artifactName": "VNTrader-portable.exe"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon-only.png",
+      "category": "public.app-category.finance"
+    }
+  }
+}
