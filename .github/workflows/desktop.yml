@@ -1,0 +1,30 @@
+name: Build Windows App
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build file exe
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: |
+          if [ ! -f package.json ] && [ -f vntrader-app/package.json ]; then cd vntrader-app; fi
+          npm install
+          npm run dist:win
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VNTrader-Windows
+          path: |
+            dist/*.exe
+            vntrader-app/dist/*.exe
